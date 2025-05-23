@@ -1,0 +1,110 @@
+----------------------------------------
+PlatformIO.ini
+----------------------------------------- 
+ 
+ 
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+monitor_port = COM4
+upload_port = COM4
+monitor_speed = 115200
+lib_deps = 
+    dfrobot/DFRobotDFPlayerMini@^1.0.6
+    Wire
+    WiFi
+    plerup/EspSoftwareSerial@^8.2.0
+
+
+----------------------------------------
+Code for Wifi Access Point on ESP32 - tested
+-----------------------------------------
+ 
+ 
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DFRobotDFPlayerMini.h>
+#include <SoftwareSerial.h>
+const char* ssid = "ESP32-Access-Point";
+const char* password = "12345678";
+WebServer server(80);
+SoftwareSerial mySoftwareSerial(16, 17); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
+int ledPin = 2;
+int slider1Value = 0;
+int slider2Value = 0;
+ 
+ 
+void handleRoot() {
+  String html = "<html><body>";
+  html += "<h1>ESP32 Web Server</h1>";
+  html += "<button onclick=\"location.href='/button1'\">Play Sound</button>";
+  html += "<button onclick=\"location.href='/button2'\">Toggle LED</button>";
+  html += "<br><br>";
+  html += "Slider 1: <input type='range' min='0' max='255' value='" + String(slider1Value) + "' onchange='updateSlider1(this.value)'><span id='slider1Value'>" + String(slider1Value) + "</span>";
+  html += "<br><br>";
+  html += "Slider 2: <input type='range' min='0' max='255' value='" + String(slider2Value) + "' onchange='updateSlider2(this.value)'><span id='slider2Value'>" + String(slider2Value) + "</span>";
+  html += "<script>";
+  html += "function updateSlider1(val) { var xhr = new XMLHttpRequest(); xhr.open('GET', '/slider1?value=' + val, true); xhr.send(); document.getElementById('slider1Value').innerText = val; }";
+  html += "function updateSlider2(val) { var xhr = new XMLHttpRequest(); xhr.open('GET', '/slider2?value=' + val, true); xhr.send(); document.getElementById('slider2Value').innerText = val; }";
+  html += "</script>";
+  html += "</body></html>";
+  server.send(200, "text/html", html);
+}
+void handleButton1() {
+  myDFPlayer.play(1); // Play the first sound file
+  server.send(200, "text/plain", "Playing sound");
+}
+void handleButton2() {
+  digitalWrite(ledPin, !digitalRead(ledPin)); // Toggle LED
+  server.send(200, "text/plain", "Toggling LED");
+}
+void handleSlider1() {
+  if (server.hasArg("value")) {
+    slider1Value = server.arg("value").toInt();
+  }
+  server.send(200, "text/plain", "Slider 1 value: " + String(slider1Value));
+}
+void handleSlider2() {
+  if (server.hasArg("value")) {
+    slider2Value = server.arg("value").toInt();
+  }
+  server.send(200, "text/plain", "Slider 2 value: " + String(slider2Value));
+}
+ 
+ 
+void setup() {
+  Serial.begin(115200);
+  mySoftwareSerial.begin(9600);
+  myDFPlayer.begin(mySoftwareSerial);
+  
+  pinMode(ledPin, OUTPUT);
+  
+  WiFi.softAP(ssid, password);
+  Serial.println("Access Point started");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.softAPIP());
+  server.on("/", handleRoot);
+  server.on("/button1", handleButton1);
+  server.on("/button2", handleButton2);
+  server.on("/slider1", handleSlider1);
+  server.on("/slider2", handleSlider2);
+  
+  server.begin();
+  Serial.println("HTTP server started");
+}
+void loop() {
+  server.handleClient();
+}
+
+
+Viele Grüße 
+Pirmin Baur
+---------------------------------------------
+Danzerweg 8c
+85748 Garching bei München
+Tel.: +49 176 23135144
+Mail: PirminBaur@gmail.com
+---------------------------------------------
+
