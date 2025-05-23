@@ -1,0 +1,59 @@
+//https://registry.platformio.org/libraries/jasonlzt/FastLED/installation
+#include "Arduino.h"
+#include "DFRobotDFPlayerMini.h"
+#include "FastLED.h"
+#include <WiFi.h>
+#define FPSerial Serial1   // DFPlayer mini
+#define NUM_LEDS 4
+#define DATA_PIN 13
+//#define CLOCK_PIN 13 // not needed
+DFRobotDFPlayerMini myDFPlayer;
+// Define the array of leds
+CRGB leds[NUM_LEDS];
+void setup()
+{
+   // ESP32 Serial begin
+   Serial.begin(115200); 
+   //Set up DFPlayer mini
+   FPSerial.begin(9600, SERIAL_8N1, /*rx =*/16, /*tx =*/17);   // DFplayer mini Serial 
+   Serial.println();
+   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
+      if (!myDFPlayer.begin(FPSerial, /*isACK = */true, /*doReset = */true)) {   //Use serial to communicate with mp3.
+      Serial.println(F("Unable to begin:"));
+      Serial.println(F("1.Please recheck the connection!"));
+      Serial.println(F("2.Please insert the SD card!"));
+      while(true);
+      }
+   Serial.println(F("DFPlayer Mini online."));
+   myDFPlayer.setTimeOut(500); //Set serial communictaion time out 500ms
+   myDFPlayer.volume(20);   //Set volume value (0~30).
+   myDFPlayer.EQ(DFPLAYER_EQ_NORMAL);
+   myDFPlayer.outputDevice(DFPLAYER_DEVICE_U_DISK);
+//Set up LED
+///FastLED.addLeds<WS2812B, DATA_PIN, RGB>(leds, NUM_LEDS);
+FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS); 
+}
+
+void loop()
+{
+    myDFPlayer.playFolder(01, 002);   //play specific mp3 in SD:/15/004.mp3; Folder Name(1~99); File Name(1~255)
+  
+    for (int zaehler=1; zaehler<10; zaehler = zaehler+1){
+      // Turn the LED on, then pause
+   leds[0] = CRGB::Orange;
+   leds[1] = CRGB::Orange;
+   leds[2] = CRGB::Orange;
+   leds[3] = CRGB::Orange;
+   FastLED.show();
+   delay(500);
+   // Now turn the LED off, then pause
+   leds[0] = CRGB::Black;
+   leds[1] = CRGB::Black;
+   leds[2] = CRGB::Black;
+   leds[3] = CRGB::Black;
+   FastLED.show();
+   delay(500);
+   }
+  
+   delay(3000);
+}
