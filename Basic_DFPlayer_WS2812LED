@@ -7,6 +7,7 @@
 #define NUM_LEDS 4
 #define DATA_PIN 13
 //#define CLOCK_PIN 13 // not needed
+
 DFRobotDFPlayerMini myDFPlayer;
 // Define the array of leds
 CRGB leds[NUM_LEDS];
